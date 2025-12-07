@@ -20,9 +20,9 @@ pinned: false
 
 大型语言模型 (Large Language Model, LLM) 智能体在近期取得了进展，展现了其有前景的通用能力。然而，由于难以有效集成外部工具和特定的提示策略，它们在专业化的现实世界领域中的性能通常会下降。虽然已经提出了诸如智能体强化学习 (agentic reinforcement learning) 等方法来解决这个问题，但*它们通常依赖成本高昂的参数更新*，例如通过一个使用监督微调 (Supervised Fine-Tuning, SFT) 随后进行强化学习 (Reinforcement Learning, RL) 阶段（采用群体相对策略优化 (Group Relative Policy Optimization,**GRPO**)）来改变输出分布的过程。
 
-然而，我们认为 LLMs 可以通过将经验知识 (experiential knowledge) 作为标记先验 (**token prior**) 来学习，从而对输出分布产生类似的效果，这是一种轻量得多 (far more lightweight) 的方法，它不仅解决了实际*数据稀疏性* (practical data scarcity) 的问题，而且避免了常见的*过拟合* (overfitting) 问题。
+💡然而，我们认为 LLMs 可以通过将经验知识 (experiential knowledge) 作为标记先验 (**token prior**) 来学习，从而对输出分布产生类似的效果，这是一种轻量得多 (far more lightweight) 的方法，它不仅解决了实际*数据稀疏性* (practical data scarcity) 的问题，而且避免了常见的*过拟合* (overfitting) 问题。
 
-为此，我们提出了*免训练群体相对策略优化* (Training-Free Group Relative Policy Optimization, Training-Free GRPO)，这是一种*成本效益高的解决方案*，可以在不进行任何参数更新的情况下增强 LLM 智能体的性能。我们的方法利用每组推演 (rollouts) 内的群体相对语义优势而非数值优势，在**最小量的真实数据** (minimal ground-truth data) 上进行多轮 (multi-epoch) 学习过程中，迭代地提炼 (iteratively distilling) 高质量的经验知识。此类知识作为习得的标记先验，在 LLM API 调用期间被无缝集成以指导模型的行为。
+💡为此，我们提出了*免训练群体相对策略优化* (Training-Free Group Relative Policy Optimization, Training-Free GRPO)，这是一种*成本效益高的解决方案*，可以在不进行任何参数更新的情况下增强 LLM 智能体的性能。我们的方法利用每组推演 (rollouts) 内的群体相对语义优势而非数值优势，在**最小量的真实数据** (minimal ground-truth data) 上进行多轮 (multi-epoch) 学习过程中，迭代地提炼 (iteratively distilling) 高质量的经验知识。此类知识作为习得的标记先验，在 LLM API 调用期间被无缝集成以指导模型的行为。
 
 在数学推理 (mathematical reasoning) 和网络搜索 (web searching) 任务上的实验表明，Training-Free GRPO 应用于 DeepSeek-V3.1-Terminus 时，显著改善了域外性能 (out-of-domain performance)。仅凭几十个训练样本 (few dozen training samples)，Training-Free GRPO 的性能就超越了具有少量训练数据和成本的微调小型 LLMs (fine-tuned small LLMs)。
 
@@ -50,9 +50,9 @@ pinned: false
 
 我们的方法源于一个洞察：LLMs 已经拥有适应新场景的基本能力，**只需通过有限样本进行最小量的实践 即可达到强大的性能**。因此，与其通过参数调整来调整它们的输出分布，不如利用**轻量级标记先验 (lightweight token prior)** 的上下文学习 (in-context learning) 也能封装从最小训练数据集中学到的经验知识。
 
-Taining-Free GRPO 保留了原始 GRPO (vanilla GRPO) 的**多轮学习机制** (multi-epoch learning mechanism)。在每一轮中，**系统会为每个查询生成多个输出**，以提供一组推演 (group of **rollouts**)，这有助于探索**策略空间** (explore the **policy** space) 和**评估潜在策略** (evaluate **potential** **strategies**)。
+Taining-Free GRPO 保留了原始 GRPO (vanilla GRPO) 的**多轮学习机制** (multi-epoch learning mechanism)。💡在每一轮中，**系统会为每个查询生成多个输出**，以提供一组推演 (group of **rollouts**)，这有助于探索**策略空间** (explore the **policy** space) 和**评估潜在策略** (evaluate **potential** **strategies**)。
 
-然而，原始 GRPO 依赖基于**梯度的参数更新** (gradient-based parameter updates) 来迭代改进策略性能，而 Training-Free GRPO 通过使用 LLMs（大型语言模型）的仅推理操作 (inference-only operations) 消除了这一要求。在每个优化步骤中，我们的方法不是为每组推演中的梯度上升 (gradient ascent) 计算数值优势 (numerical advantage)，而是利用 LLMs 对每组进行内省 (introspect) 并提炼出语义优势 (semantic advantage)。
+然而，原始 GRPO 依赖基于**梯度的参数更新** (gradient-based parameter updates) 来迭代改进策略性能，而 Training-Free GRPO 通过💡使用 LLMs（大型语言模型）的仅推理操作 (inference-only operations) 消除了这一要求。在每个优化步骤中，我们的方法不是为每组推演中的梯度上升 (gradient ascent) 计算数值优势 (numerical advantage)，而是利用 LLMs 对每组进行内省 (introspect) 并提炼出语义优势 (semantic advantage)。
 
 这种优势精炼了外部经验知识 (experiential knowledge)，并基于不断演变的上下文先验 (contextual priors) 来指导策略输出，从而在不修改任何模型参数的情况下实现了策略优化效果。
 
