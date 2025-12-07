@@ -12,6 +12,9 @@ pinned: false
 这篇博客介绍了腾讯Training-Free GRPO论文的阅读笔记。
 
 <!-- more -->
+[代码仓库](https://github.com/TencentCloudADP/youtu-agent/tree/main)
+[参考论文1-腾讯](https://arxiv.org/pdf/2510.08191)
+[参考论文2-字节](https://arxiv.org/pdf/2511.06449)
 
 ## 摘要
 
