@@ -73,31 +73,65 @@ Taining-Free GRPO 保留了原始 GRPO (vanilla GRPO) 的**多轮学习机制** 
 
 本节介绍我们的免训练 GRPO (Training-Free GRPO)，该方法旨在复制 GRPO 算法的对齐效益，而无需对策略模型的参数执行任何基于梯度的更新。
 
-### 原始 GRPO Vanilla GRPO
-原始 GRPO 过程首先使用当前策略 LLM $\pi_{\theta}$ 为给定查询 $q$ 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$，即 $\pi_{\theta}(o_i \| q)$。然后，每个输出 $o_i$ 通过一个奖励模型 $R$ 进行独立评分。随后，利用奖励 $r = \{r_1, \ldots, r_G\}$，它为每个输出 $o_i$ 计算一个群体相对优势 (group-relative advantage) $\hat{A}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)}$。通过结合针对参考模型 (reference model) 的 KL 散度惩罚 (KL-divergence penalty)，它构建了一个 PPO 裁剪目标函数 (PPO-clipped objective function) $J_{\text{GRPO}}(\theta)$，然后通过最大化该函数来更新 LLM 参数 $\theta$。
+### 原始 GRPO (Vanilla GRPO)
+
+原始 GRPO 过程首先使用当前策略 LLM $\pi_{\theta}$ 为给定查询 $q$ 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$，即 $\pi_{\theta}(o_i \| q)$。然后，每个输出 $o_i$ 通过一个奖励模型 $R$ 进行独立评分。随后，利用奖励 $r = \{r_1, \ldots, r_G\}$，它为每个输出 $o_i$ 计算一个群体相对优势 (group-relative advantage)：
+
+$$
+\hat{A}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)}
+$$
+
+通过结合针对参考模型 (reference model) 的 KL 散度惩罚 (KL-divergence penalty)，它构建了一个 PPO 裁剪目标函数 (PPO-clipped objective function)：
+
+$$
+J_{\text{GRPO}}(\theta)
+$$
+
+然后通过最大化该函数来更新 LLM 参数 $\theta$。
 
 ### Training-Free GRPO 的核心逻辑
 
 Training-Free GRPO 重新利用了这种基于群体的相对评估的核心逻辑，但将其转化为非参数化 (non-parametric) 的推理时过程 (inference-time process)。我们永久冻结参数 $\theta$，并维护一个外部经验知识 (external experiential knowledge) $E$，其初始化为 $\emptyset$，而不是更新参数 $\theta$。
 
-### 推演与奖励 Rollout and Reward
+#### 推演与奖励 (Rollout and Reward)
 
 我们的推演和奖励过程与 GRPO 完全一致。给定一个查询 $q$，我们执行一个并行推演 (parallel rollout)，使用 LLM 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$。值得注意的是，虽然 GRPO 使用当前的可训练策略 $\pi_{\theta}$，但我们的策略以经验知识 $E$ 为条件，即 $\pi_{\theta}(o_i \| q, E)$。与标准 GRPO 设置相同，我们通过奖励模型 $R$ 对每个输出 $o_i$ 进行评分，以获得一个标量奖励 (scalar reward) $r_i = R(q, o_i)$。
 
-### 群体优势计算 (Group Advantage Computation)
+#### 群体优势计算 (Group Advantage Computation)
 
-为了为策略参数提供优化方向，原始 GRPO 计算一个数值优势 $\hat{A}_i$，用于**量化每个输出 $o_i$ 在其群体内的相对质量**。类似地，Training-Free GRPO 在每个群体内执行类似的比较，但会以自然语言经验的形式产生群体相对语义优势 (group relative semantic advantage)，如图 3 所示 。
+为了为策略参数提供优化方向，原始 GRPO 计算一个数值优势 $\hat{A}_i$，用于**量化每个输出 $o_i$ 在其群体内的相对质量**。类似地，Training-Free GRPO 在每个群体内执行类似的比较，但会以自然语言经验的形式产生群体相对语义优势 (group relative semantic advantage)。
 
-📌 由于在原始 GRPO 中，当所有 $G$ 个输出获得相同奖励（即 $\text{std}(r) = 0$）时，$\hat{A}_i = 0$，因此我们仅对存在明确赢家和输家的群体生成这种语义优势。**具体来说**，对于每个输出 $o_i$，我们首先询问同一个 LLM $M$ 分别提供一个相应的总结 $s_i = M(p_{summary}, q, o_i)$，其中 $p_{summary}$ 是一个提示模板，它结合了查询 $q$ 和输出 $o_i$ 来形成一个结构化的总结请求。给定总结 $\{s_1, s_2, \ldots, s_G\}$ 和当前的经验知识 $E$，LLM $M$ 阐明了输出相对成功或失败的原因，然后提取一个简洁的自然语言经验 $A_{text} = M(p_{extract}, q, s_i, E)$，其中 $p_{extract}$ 是另一个用于经验提取的提示模板。
+> 📌 **注意**：在原始 GRPO 中，当所有 $G$ 个输出获得相同奖励（即 $\text{std}(r) = 0$）时，$\hat{A}_i = 0$，因此我们仅对存在明确赢家和输家的群体生成这种语义优势。
+
+具体来说，对于每个输出 $o_i$，我们首先询问同一个 LLM $M$ 分别提供一个相应的总结：
+
+$$
+s_i = M(p_{summary}, q, o_i)
+$$
+
+其中 $p_{summary}$ 是一个提示模板，它结合了查询 $q$ 和输出 $o_i$ 来形成一个结构化的总结请求。给定总结 $\{s_1, s_2, \ldots, s_G\}$ 和当前的经验知识 $E$，LLM $M$ 阐明了输出相对成功或失败的原因，然后提取一个简洁的自然语言经验：
+
+$$
+A_{\text{text}} = M(p_{extract}, q, s_i, E)
+$$
+
+其中 $p_{extract}$ 是另一个用于经验提取的提示模板。
 
 这种自然语言经验 $A_{\text{text}}$ 作为我们的语义优势，在功能上等同于原始 GRPO 的 $\hat{A}_i$，它编码了什么行动导致高奖励的关键经验知识。
 
-#### Optimization
-原始 GRPO（vanilla GRPO）通过在单个批次中计算得到的所有优势 (all advantages) 对 $J_{\text{GRPO}}(\theta)$ 进行梯度上升 (gradient ascent) 来更新其模型参数 $\theta$，**📌 而我们则使用当前批次中的所有语义优势 $A_{\text{text}}$ 来更新我们的经验库 (experience library) $E$**。具体来说，给定现有的经验库 $E$，我们提示 LLM 根据所有这些 $A_{\text{text}}$ 生成一个操作列表 (list of operations)，其中每个操作可以是：
-    - 添加 (**Add**)： 将 $A_{\text{text}}$ 中描述的经验直接附加到经验库 $E$ 中。
-    - 删除 (**Delete**)： 基于 $A_{\text{text}}$，从经验库 $E$ 中移除一条低质量经验。
-    - 修改 (**Modify**)： 基于 $A_{\text{text}}$ 中的见解，对经验库 $E$ 中现有的经验进行精炼或改进。
-    - 保留 (**Keep**)： 经验库 $E$ 保持不变。
+#### 优化 (Optimization)
+
+原始 GRPO（vanilla GRPO）通过在单个批次中计算得到的所有优势 (all advantages) 对 $J_{\text{GRPO}}(\theta)$ 进行梯度上升 (gradient ascent) 来更新其模型参数 $\theta$。
+
+> 📌 **而我们则使用当前批次中的所有语义优势 $A_{\text{text}}$ 来更新我们的经验库 (experience library) $E$**。
+
+具体来说，给定现有的经验库 $E$，我们提示 LLM 根据所有这些 $A_{\text{text}}$ 生成一个操作列表 (list of operations)，其中每个操作可以是：
+
+- **添加 (Add)**：将 $A_{\text{text}}$ 中描述的经验直接附加到经验库 $E$ 中。
+- **删除 (Delete)**：基于 $A_{\text{text}}$，从经验库 $E$ 中移除一条低质量经验。
+- **修改 (Modify)**：基于 $A_{\text{text}}$ 中的见解，对经验库 $E$ 中现有的经验进行精炼或改进。
+- **保留 (Keep)**：经验库 $E$ 保持不变。
+
 
 
 
