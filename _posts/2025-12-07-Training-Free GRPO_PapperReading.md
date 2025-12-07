@@ -152,6 +152,7 @@ $$
 | **结果 (Outcome)**   | $CE \approx 106.9076$  |
 
 
+
 未受辅助的智能体初始化一个坐标系，将 $D = (0, 0)$ 并将 $ABCD$ 建模为与坐标轴对齐。对于 $EFGH$，它设置 $E = (x_f - 184, 0)$，$F = (x_f, 0)$，并且关键地设置 $G = (x_f, +17)$，$H = (x_f - 184, +17)$，即短边具有正向垂直方向 (positive vertical orientation)。然后，它通过行列式条件 (determinant condition) 强制执行 $A(0, 16)$、$D(0, 0)$、$G$、$H$ 的四点共圆性 (four-point concyclicity) 并求解 $x_f$，得到 $x_f \approx 184.092$，因此 $x_e = x_f - 184 \approx 0.092$。由此，它报告 $CE \approx 106.9076$ 以及一个“精确”表达式 $199 - \sqrt{8481}$。
 
 这条轨迹表现出三个系统性问题：  
