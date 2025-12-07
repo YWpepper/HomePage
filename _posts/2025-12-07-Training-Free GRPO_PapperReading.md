@@ -307,7 +307,8 @@ SINGLE_QUERY_CRITIQUE_TEMPLATE = """一个智能体系统被提供了一组经�
 
 请在上述 3 个步骤的指导下提供详细的推理。
 在分步推理之后，您将以如下 JSON 格式返回：
-```json
+
+{ json
 [
     {
         "option": "modify",
@@ -319,11 +320,9 @@ SINGLE_QUERY_CRITIQUE_TEMPLATE = """一个智能体系统被提供了一组经�
         "experience": "the added experience"
     },
     ...
-]
-```
+] }
 
 请注意，您更新的经验可能不需要涵盖所有两种选项。只使用一种更新类型也是可以的。
-
 <problem>
 {problem}
 </problem>
@@ -372,7 +371,7 @@ BATCH_EXPERIENCE_UPDATE_TEMPLATE = """一个智能体系统被提供了一组经
   * 合并：您可以将一些相似的经验合并成更通用的形式以减少重复。
 
 在生成分步推理之后，您需要以如下 JSON 格式返回最终的经验修订细节：
-```json
+{json
 [
     {
         "option": "modify",
@@ -386,9 +385,7 @@ BATCH_EXPERIENCE_UPDATE_TEMPLATE = """一个智能体系统被提供了一组经
     },
     ...
 ]
-```
-
-您更新的经验可能不需要涵盖所有两种选项。只使用一种更新类型也是可以的。"""
+}
 ```
 
 #### 5. SINGLE_ROLLOUT_SUMMARY_NO_GT_TEMPLATE
@@ -441,7 +438,7 @@ SINGLE_QUERY_CRITIQUE_NO_GT_TEMPLATE = """一个智能体系统被提供了一�
 
 请在上述 3 个步骤的指导下提供详细的推理。
 在分步推理之后，您将以如下 JSON 格式返回：
-```json
+{json
 [
     {
         "option": "modify",
@@ -454,10 +451,9 @@ SINGLE_QUERY_CRITIQUE_NO_GT_TEMPLATE = """一个智能体系统被提供了一�
     },
     ...
 ]
-```
+}
 
 请注意，您更新的经验可能不需要涵盖所有两种选项。只使用一种更新类型也是可以的。
-
 <problem>
 {problem}
 </problem>
@@ -470,8 +466,6 @@ SINGLE_QUERY_CRITIQUE_NO_GT_TEMPLATE = """一个智能体系统被提供了一�
 {experiences}
 </experience>"""
 ```
-
-
 
 ---
 
