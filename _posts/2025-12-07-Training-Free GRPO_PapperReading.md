@@ -63,7 +63,7 @@ Taining-Free GRPO 保留了原始 GRPO (vanilla GRPO) 的**多轮学习机制** 
 * 卓越的泛化能力 (Superior Generalization)：通过保持模型参数冻结并插入不同的标记先验，我们的方法完全保留了泛化能力，消除了部署多个微调专家模型的成本和复杂性。
 
 
-<img src="https://images.weserv.nl/?url=cdn.nlark.com/yuque/0/2025/png/40742019/1765115609308-0106c8a6-68e6-47ff-9065-504fecf54408.png?x-oss-process=image%2Fformat%2Cwebp" width="100%"/>
+<img src="https://images.weserv.nl/?url=cdn.nlark.com/yuque/0/2025/png/40742019/1765115609308-0106c8a6-68e6-47ff-9065-504fecf54408.png?x-oss-process=image%2Fformat%2Cwebp" width="70%"/>
 
 
 ## 2 Training-Free GRPO
@@ -86,7 +86,7 @@ Training-Free GRPO 重新利用了这种基于群体的相对评估的核心逻�
 
 为了为策略参数提供优化方向，原始 GRPO 计算一个数值优势 $\hat{A}_i$，用于**量化每个输出 $o_i$ 在其群体内的相对质量**。类似地，Training-Free GRPO 在每个群体内执行类似的比较，但会以自然语言经验的形式产生群体相对语义优势 (group relative semantic advantage)，如图 3 所示 。
 
-📌 由于在原始 GRPO 中，当所有 $G$ 个输出获得相同奖励（即 $\text{std}(r) = 0$）时，$\hat{A}_i = 0$，因此我们仅对存在明确赢家和输家的群体生成这种语义优势。**具体来说**，*对于每个输出 $o_i$，我们首先询问同一个 LLM $M$ 分别提供一个相应的总结* $s_i = M(p_{\text{summary}}, q, o_i)$，其中 $p_{\text{summary}}$ 是一个提示模板，它结合了查询 $q$ 和输出 $o_i$ 来形成一个结构化的总结请求。给定总结 $\{s_1, s_2, \ldots, s_G\}$ 和当前的经验知识 $E$，LLM $M$ 阐明了输出相对成功或失败的原因，然后提取一个简洁的自然语言经验 $A_{\text{text}} = M(p_{\text{extract}}, q, s_i, E)$，其中 $p_{\text{extract}}$ 是另一个用于经验提取的提示模板。
+📌 由于在原始 GRPO 中，当所有 $G$ 个输出获得相同奖励（即 $\text{std}(r) = 0$）时，$\hat{A}_i = 0$，因此我们仅对存在明确赢家和输家的群体生成这种语义优势。**具体来说**，对于每个输出 $o_i$，我们首先询问同一个 LLM $M$ 分别提供一个相应的总结 $s_i = M(p_{\text{summary}}, q, o_i)$，其中 $p_{\text{summary}}$ 是一个提示模板，它结合了查询 $q$ 和输出 $o_i$ 来形成一个结构化的总结请求。给定总结 $\{s_1, s_2, \ldots, s_G\}$ 和当前的经验知识 $E$，LLM $M$ 阐明了输出相对成功或失败的原因，然后提取一个简洁的自然语言经验 $A_{\text{text}} = M(p_{\text{extract}}, q, s_i, E)$，其中 $p_{\text{extract}}$ 是另一个用于经验提取的提示模板。
 
 这种自然语言经验 $A_{\text{text}}$ 作为我们的语义优势，在功能上等同于原始 GRPO 的 $\hat{A}_i$，它编码了什么行动导致高奖励的关键经验知识。
 
