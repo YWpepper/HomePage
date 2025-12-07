@@ -139,7 +139,9 @@ $$
 
 在数学推理和网络搜索场景中，我们提供了示例，说明 Training-Free GRPO (免训练群体相对策略优化) 如何使用 DeepSeek-V3.1-Terminus 和相应的工具来增强 ReAct [1]。
 
-#### A.1 经验引导的工具集成数学推理 (Experience-Guided Tool-Integrated Math Reasoning)
+#### A.1 经验引导的工具集成数学推理
+ > Experience-Guided Tool-Integrated Math Reasoning
+
 <img src="https://images.weserv.nl/?url=cdn.nlark.com/yuque/0/2025/png/40742019/1765117594966-b3fce48c-accb-43ef-a086-a79f16daf7a9.png?x-oss-process=image%2Fformat%2Cwebp" width="85%"/>
 
 我们考虑一个包含两个矩形 ABCD 和 EFGH 的几何配置，其中 D、E、C、F 依次共线，并且 A、D、H、G 共圆 (concyclic)。已知 $BC = 16$，$AB = 107$，$FG = 17$，$EF = 184$，任务是确定 $CE$ 的长度。
