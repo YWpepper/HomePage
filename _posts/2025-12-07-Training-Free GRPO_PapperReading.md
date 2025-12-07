@@ -44,7 +44,7 @@ pinned: false
 
 ### Proposed Solution
 
-参数调整固有的这些限制促使了一个基础性的研究问题：应用 RL 在参数空间中是唯一可行的途径吗？我们能否以非参数方式，用更低的数据和计算成本来增强 LLM 智能体的性能？
+> 参数调整固有的这些限制促使了一个基础性的研究问题：应用 RL 在参数空间中是唯一可行的途径吗？我们能否以非参数方式，用更低的数据和计算成本来增强 LLM 智能体的性能？
 
 我们通过提出**免训练群体相对策略优化** (Training-Free Group Relative Policy Optimization, Training-Free GRPO)，肯定地回答了这个问题。这是一种新颖且高效 的方法，它以类似于原始 GRPO 的方式改进 LLM 智能体的行为，同时保持原始模型参数不变 (preserving the original model parameters unchanged)。
 
@@ -131,6 +131,36 @@ $$
 - **删除 (Delete)**：基于 $A_{\text{text}}$，从经验库 $E$ 中移除一条低质量经验。
 - **修改 (Modify)**：基于 $A_{\text{text}}$ 中的见解，对经验库 $E$ 中现有的经验进行精炼或改进。
 - **保留 (Keep)**：经验库 $E$ 保持不变。
+
+
+
+
+### 案例研究 (A Case Study)
+
+<img src="https://images.weserv.nl/?url=cdn.nlark.com/yuque/0/2025/png/40742019/1765117594966-b3fce48c-accb-43ef-a086-a79f16daf7a9.png?x-oss-process=image%2Fformat%2Cwebp" width="85%"/>
+
+在数学推理和网络搜索场景中，我们提供了示例，说明 Training-Free GRPO (免训练群体相对策略优化) 如何使用 DeepSeek-V3.1-Terminus 和相应的工具来增强 ReAct [1]。
+
+#### A.1 经验引导的工具集成数学推理 (Experience-Guided Tool-Integrated Math Reasoning)
+
+我们考虑一个包含两个矩形 ABCD 和 EFGH 的几何配置，其中 D、E、C、F 依次共线，并且 A、D、H、G 共圆 (concyclic)。已知 $BC = 16$，$AB = 107$，$FG = 17$，$EF = 184$，任务是确定 $CE$ 的长度。
+
+##### 工具集成数学推理（无经验） (Tool-integrated Math Reasoning (without experiences))
+
+| **问题 (Question)** | 矩形 ABCD 和 EFGH 被绘制，使得 D、E、C、F 共线。此外，A、D、H、G 四点位于同一个圆上。如果 $BC = 16$，$AB = 107$，$FG = 17$，$EF = 184$，那么 $CE$ 的长度是多少？ |
+|----------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **轨迹 (Trajectory)** | 1. **[Agent]** 我将点 D 放置在原点 $(0, 0)$，并使用一条水平线表示 D、E、C、F。对于矩形 ABCD，设置 $A = (0, 16)$，$B = (107, 16)$，$C = (107, 0)$，$D = (0, 0)$。<br>2. **[Tool]** 相应地设置坐标。<br>3. **[Agent]** 由于 EFGH 是一个矩形，$EF$ 水平且 $FG = 17$，设置 $F = (x_f, 0)$，$E = (x_f - 184, 0)$，并初步设置 $G = (x_f, +17)$，$H = (x_f - 184, +17)$。<br>4. **[Agent]** 使用四点行列式条件 (4-point determinant condition)，强制执行 $A(0, 16)$、$D(0, 0)$、$G(x_f, 17)$、$H(x_f - 184, 17)$ 的共圆性 (concyclicity)，推导出关于 $x_f$ 的方程。<br>5. **[Tool]** 解出所得的二次方程 $x_f$；得到 $x_f \approx 184.092$，因此 $x_e = x_f - 184 \approx 0.092$。<br>6. **[Agent]** 计算 $CE = |107 - x_e| \approx 106.9076$。<br>7. **[Agent]** 交换点顺序 ($D–C–E–F, E–D–C–F$) 并重新推导。在某一点，使用角度-正弦关系 (angle-sine relation)，得到 $x_e(x_e + 184) = 17$，从而得出 $x_e = -92 + \sqrt{8481} \approx 0.0923$，因此 $CE \approx 106.9076$。<br>8. **[Agent]** 呈现一个“精确形式” $CE = 199 - \sqrt{8481}$ 作为最终答案。 |
+| **结果 (Outcome)**   | $CE \approx 106.9076$  |
+
+
+未受辅助的智能体初始化一个坐标系，将 $D = (0, 0)$ 并将 $ABCD$ 建模为与坐标轴对齐。对于 $EFGH$，它设置 $E = (x_f - 184, 0)$，$F = (x_f, 0)$，并且关键地设置 $G = (x_f, +17)$，$H = (x_f - 184, +17)$，即短边具有正向垂直方向 (positive vertical orientation)。然后，它通过行列式条件 (determinant condition) 强制执行 $A(0, 16)$、$D(0, 0)$、$G$、$H$ 的四点共圆性 (four-point concyclicity) 并求解 $x_f$，得到 $x_f \approx 184.092$，因此 $x_e = x_f - 184 \approx 0.092$。由此，它报告 $CE \approx 106.9076$ 以及一个“精确”表达式 $199 - \sqrt{8481}$。
+
+这条轨迹表现出三个系统性问题：  
+1. **对垂直方向的误解**（$G$、$H$ 的 $y$ 坐标符号错误）。  
+2. **对 $D–E–C–F$ 顺序的不一致处理**以及缺乏对线段关系的统一参数化。  
+3. **缺乏系统、全面的解后验证**——即没有集成检查最终坐标是否同时满足矩形尺寸。
+
+这些问题导致不正确的循环约束 (incorrect cyclic constraint)（例如，形式为 $x(x + 184) = 17$ 的中间关系）和 [不完整，原文在此处中断]。
 
 
 
