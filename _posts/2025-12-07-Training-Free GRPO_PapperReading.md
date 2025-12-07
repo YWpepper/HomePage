@@ -66,7 +66,7 @@ Taining-Free GRPO 保留了原始 GRPO (vanilla GRPO) 的**多轮学习机制** 
 * 卓越的泛化能力 (Superior Generalization)：通过保持模型参数冻结并插入不同的标记先验，我们的方法完全保留了泛化能力，消除了部署多个微调专家模型的成本和复杂性。
 
 
-<img src="https://images.weserv.nl/?url=cdn.nlark.com/yuque/0/2025/png/40742019/1765115609308-0106c8a6-68e6-47ff-9065-504fecf54408.png?x-oss-process=image%2Fformat%2Cwebp" width="70%"/>
+<img src="https://images.weserv.nl/?url=cdn.nlark.com/yuque/0/2025/png/40742019/1765115609308-0106c8a6-68e6-47ff-9065-504fecf54408.png?x-oss-process=image%2Fformat%2Cwebp" width="85%"/>
 
 
 ## 2 Training-Free GRPO
@@ -74,18 +74,17 @@ Taining-Free GRPO 保留了原始 GRPO (vanilla GRPO) 的**多轮学习机制** 
 本节介绍我们的免训练 GRPO (Training-Free GRPO)，该方法旨在复制 GRPO 算法的对齐效益，而无需对策略模型的参数执行任何基于梯度的更新。
 
 ### 原始 GRPO Vanilla GRPO
-
-原始 GRPO 过程首先使用当前策略 LLM $\pi_{\theta}$ 为给定查询 $q$ 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$，即 $\pi_{\theta}(o_i | q)$。然后，每个输出 $o_i$ 通过一个奖励模型 $R$ 进行独立评分。随后，利用奖励 $r = \{r_1, \ldots, r_G\}$，它为每个输出 $o_i$ 计算一个群体相对优势 (group-relative advantage) $\hat{A}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)}$。通过结合针对参考模型 (reference model) 的 KL 散度惩罚 (KL-divergence penalty)，它构建了一个 PPO 裁剪目标函数 (PPO-clipped objective function) $J_{\text{GRPO}}(\theta)$，然后通过最大化该函数来更新 LLM 参数 $\theta$。
+原始 GRPO 过程首先使用当前策略 LLM $\pi_{\theta}$ 为给定查询 $q$ 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$，即 $\pi_{\theta}(o_i \| q)$。然后，每个输出 $o_i$ 通过一个奖励模型 $R$ 进行独立评分。随后，利用奖励 $r = \{r_1, \ldots, r_G\}$，它为每个输出 $o_i$ 计算一个群体相对优势 (group-relative advantage) $\hat{A}_i = \frac{r_i - \text{mean}(r)}{\text{std}(r)}$。通过结合针对参考模型 (reference model) 的 KL 散度惩罚 (KL-divergence penalty)，它构建了一个 PPO 裁剪目标函数 (PPO-clipped objective function) $J_{\text{GRPO}}(\theta)$，然后通过最大化该函数来更新 LLM 参数 $\theta$。
 
 ### Training-Free GRPO 的核心逻辑
 
 Training-Free GRPO 重新利用了这种基于群体的相对评估的核心逻辑，但将其转化为非参数化 (non-parametric) 的推理时过程 (inference-time process)。我们永久冻结参数 $\theta$，并维护一个外部经验知识 (external experiential knowledge) $E$，其初始化为 $\emptyset$，而不是更新参数 $\theta$。
 
-#### 推演与奖励 Rollout and Reward
+### 推演与奖励 Rollout and Reward
 
-我们的推演和奖励过程与 GRPO 完全一致。给定一个查询 $q$，我们执行一个并行推演 (parallel rollout)，使用 LLM 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$。值得注意的是，虽然 GRPO 使用当前的可训练策略 $\pi_{\theta}$，但我们的策略以经验知识 $E$ 为条件，即 $\pi_{\theta}(o_i|q, E)$。与标准 GRPO 设置相同，我们通过奖励模型 $R$ 对每个输出 $o_i$ 进行评分，以获得一个标量奖励 (scalar reward) $r_i = R(q, o_i)$。
+我们的推演和奖励过程与 GRPO 完全一致。给定一个查询 $q$，我们执行一个并行推演 (parallel rollout)，使用 LLM 生成一组 $G$ 个输出 $\{o_1, o_2, \ldots, o_G\}$。值得注意的是，虽然 GRPO 使用当前的可训练策略 $\pi_{\theta}$，但我们的策略以经验知识 $E$ 为条件，即 $\pi_{\theta}(o_i \| q, E)$。与标准 GRPO 设置相同，我们通过奖励模型 $R$ 对每个输出 $o_i$ 进行评分，以获得一个标量奖励 (scalar reward) $r_i = R(q, o_i)$。
 
-#### 群体优势计算 (Group Advantage Computation)
+### 群体优势计算 (Group Advantage Computation)
 
 为了为策略参数提供优化方向，原始 GRPO 计算一个数值优势 $\hat{A}_i$，用于**量化每个输出 $o_i$ 在其群体内的相对质量**。类似地，Training-Free GRPO 在每个群体内执行类似的比较，但会以自然语言经验的形式产生群体相对语义优势 (group relative semantic advantage)，如图 3 所示 。
 
