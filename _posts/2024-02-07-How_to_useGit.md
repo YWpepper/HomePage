@@ -1,5 +1,5 @@
 ---
-title: 'How_to_useUbuntu'
+title: 'How_to_useGit'
 lang: zh-CN
 date: 2024-02-07
 author: pepper
