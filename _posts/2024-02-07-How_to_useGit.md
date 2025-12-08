@@ -3,7 +3,7 @@ title: 'How_to_useGit'
 lang: zh-CN
 date: 2024-02-07
 author: pepper
-permalink: /posts/2024/02/how_to_use_ubuntu/
+# permalink: /posts/2024/02/how_to_use_ubuntu/
 toc: true
 pinned: false
 tags:
